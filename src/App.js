@@ -1,22 +1,26 @@
 import React, { useState, useEffect } from "react";
 import Web3 from "web3";
 import detectEthereumProvider from "@metamask/detect-provider";
+import loadContract from "./utils/loadContract";
 import "./App.css";
 
 function App() {
   const [web3Api, setWeb3Api] = useState({
     provider: null,
     web3: null,
+    contract: null,
   });
   const [account, setAccount] = useState(null);
 
   useEffect(() => {
     const loadProvider = async () => {
       const provider = await detectEthereumProvider();
+      const contract = await loadContract("Faucet", provider);
       if (provider) {
         setWeb3Api({
           web3: new Web3(provider),
           provider,
+          contract,
         });
       } else {
         console.error("Please install Metamask.");
@@ -37,8 +41,8 @@ function App() {
   }, [web3Api.web3]);
 
   const onConnectWallet = () => {
-    web3Api.provider.request({method: "eth_requestAccounts"})
-  }
+    web3Api.provider.request({ method: "eth_requestAccounts" });
+  };
 
   return (
     <>
@@ -51,7 +55,9 @@ function App() {
             {account ? (
               <span>{account}</span>
             ) : (
-              <button className="button" onClick={onConnectWallet}>Connect Wallet</button>
+              <button className="button" onClick={onConnectWallet}>
+                Connect Wallet
+              </button>
             )}
           </div>
           <div className="balance-view is-size-2 my-4">
