@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Web3 from "web3";
+import detectEthereumProvider from "@metamask/detect-provider";
 import "./App.css";
 
 function App() {
@@ -7,45 +8,57 @@ function App() {
     provider: null,
     web3: null,
   });
+  const [account, setAccount] = useState(null);
 
   useEffect(() => {
     const loadProvider = async () => {
-      let provider = null;
-      // with metamask we have access to window.ethereum & window.web3
-      // metamask injects these global APIs into the website
-      // we can then request users, accounts, write data to blockchain,
-      // sign messages and transactions
-      if (window.ethereum) {
-        provider = window.ethereum;
-        try {
-          await provider.enable()
-        } catch (error) {
-          console.error(error)
-        }
-      } else if (window.web3) {
-        provider = window.web3.currentProvider;
-      } else if (!process.env.production) {
-        provider = new Web3.providers.HttpProvider("http://localhost:7545");
+      const provider = await detectEthereumProvider();
+      if (provider) {
+        setWeb3Api({
+          web3: new Web3(provider),
+          provider,
+        });
+      } else {
+        console.error("Please install Metamask.");
       }
-
-      setWeb3Api({
-        web3: new Web3(provider),
-        provider,
-      });
     };
-
     loadProvider();
   }, []);
+
+  useEffect(() => {
+    const getAccount = async () => {
+      const [firstAccount] = await web3Api.web3.eth.getAccounts();
+      setAccount(firstAccount);
+    };
+
+    if (web3Api.web3) {
+      getAccount();
+    }
+  }, [web3Api.web3]);
+
+  const onConnectWallet = () => {
+    web3Api.provider.request({method: "eth_requestAccounts"})
+  }
 
   return (
     <>
       <div className="faucet-wrapper">
         <div className="faucet">
-          <div className="balance-view is-size-2">
-            Current Balance: <strong>10</strong>ETH
+          <div className="is-flex is-align-items-center">
+            <span className="mr-1">
+              <strong>Account:</strong>
+            </span>
+            {account ? (
+              <span>{account}</span>
+            ) : (
+              <button className="button" onClick={onConnectWallet}>Connect Wallet</button>
+            )}
           </div>
-          <button className="btn mr-2">Donate</button>
-          <button className="btn">Withdraw</button>
+          <div className="balance-view is-size-2 my-4">
+            Current Balance: <strong>10</strong> ETH
+          </div>
+          <button className="button is-link mr-2">Donate</button>
+          <button className="button is-primary">Withdraw</button>
         </div>
       </div>
     </>
