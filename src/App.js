@@ -14,11 +14,16 @@ function App() {
   const [balance, setBalance] = useState(null);
   const [shouldReload, setShouldReload] = useState(false);
 
+  const setAccountListener = (provider) => {
+    provider.on("accountsChanged", () => window.location.reload());
+  };
+
   useEffect(() => {
     const loadProvider = async () => {
       const provider = await detectEthereumProvider();
       const contract = await loadContract("Faucet", provider);
       if (provider) {
+        setAccountListener(provider);
         setWeb3Api({
           web3: new Web3(provider),
           provider,
@@ -96,10 +101,18 @@ function App() {
           <div className="balance-view is-size-2 my-4">
             Current Balance: <strong>{balance}</strong> ETH
           </div>
-          <button className="button is-link mr-2" onClick={addFunds}>
+          <button
+            disabled={!account}
+            className="button is-link mr-2"
+            onClick={addFunds}
+          >
             Donate 1 ETH
           </button>
-          <button className="button is-primary" onClick={withdrawFunds}>
+          <button
+            disabled={!account}
+            className="button is-primary"
+            onClick={withdrawFunds}
+          >
             Withdraw
           </button>
         </div>
