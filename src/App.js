@@ -10,6 +10,7 @@ function App() {
     web3: null,
     contract: null,
   });
+  const [isProviderLoaded, setIsProviderLoaded] = useState(false);
   const [account, setAccount] = useState(null);
   const [balance, setBalance] = useState(null);
   const [shouldReload, setShouldReload] = useState(false);
@@ -21,8 +22,8 @@ function App() {
   useEffect(() => {
     const loadProvider = async () => {
       const provider = await detectEthereumProvider();
-      const contract = await loadContract("Faucet", provider);
       if (provider) {
+        const contract = await loadContract("Faucet", provider);
         setAccountListener(provider);
         setWeb3Api({
           web3: new Web3(provider),
@@ -32,6 +33,7 @@ function App() {
       } else {
         console.error("Please install Metamask.");
       }
+      setIsProviderLoaded(true);
     };
     loadProvider();
   }, []);
@@ -86,18 +88,34 @@ function App() {
     <>
       <div className="faucet-wrapper">
         <div className="faucet">
-          <div className="is-flex is-align-items-center">
-            <span className="mr-1">
-              <strong>Account:</strong>
-            </span>
-            {account ? (
-              <span>{account}</span>
-            ) : (
-              <button className="button" onClick={onConnectWallet}>
-                Connect Wallet
-              </button>
-            )}
-          </div>
+          {isProviderLoaded ?
+            <div className="is-flex is-align-items-center">
+              <span className="mr-1">
+                <strong>Account:</strong>
+              </span>
+              {account ? (
+                <span>{account}</span>
+              ) : !web3Api.provider ? (
+                <>
+                  <div className="notification is-warning is-size-6 is-rounded">
+                    Wallet is not detected.
+                    <a
+                      className="ml-1"
+                      target="_blank"
+                      href="https://docs.metamask.io"
+                      rel="noreferrer"
+                    >
+                      Install Metamask
+                    </a>
+                  </div>
+                </>
+              ) : (
+                <button className="button" onClick={onConnectWallet}>
+                  Connect Wallet
+                </button>
+              )}
+            </div> : <span>Looking for Web3...</span>
+          }
           <div className="balance-view is-size-2 my-4">
             Current Balance: <strong>{balance}</strong> ETH
           </div>
