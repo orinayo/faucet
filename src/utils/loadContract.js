@@ -6,7 +6,12 @@ const loadContract = async (contractName, provider) => {
   ).json();
   const _contract = contract(Artifact);
   _contract.setProvider(provider);
-  const deployedContract = await _contract.deployed();
+  let deployedContract = null;
+  try {
+    deployedContract = await _contract.deployed();
+  } catch (error) {
+    console.error("Cannot load the deployed contract")
+  }
   return deployedContract;
 };
 

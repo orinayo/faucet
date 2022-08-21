@@ -15,8 +15,11 @@ function App() {
   const [balance, setBalance] = useState(null);
   const [shouldReload, setShouldReload] = useState(false);
 
-  const setAccountListener = (provider) => {
+  const canConnectToContract = account && web3Api.contract;
+
+  const setProviderChangeListeners = (provider) => {
     provider.on("accountsChanged", () => window.location.reload());
+    provider.on("chainChanged", () => window.location.reload());
   };
 
   useEffect(() => {
@@ -24,7 +27,7 @@ function App() {
       const provider = await detectEthereumProvider();
       if (provider) {
         const contract = await loadContract("Faucet", provider);
-        setAccountListener(provider);
+        setProviderChangeListeners(provider);
         setWeb3Api({
           web3: new Web3(provider),
           provider,
@@ -88,7 +91,7 @@ function App() {
     <>
       <div className="faucet-wrapper">
         <div className="faucet">
-          {isProviderLoaded ?
+          {isProviderLoaded ? (
             <div className="is-flex is-align-items-center">
               <span className="mr-1">
                 <strong>Account:</strong>
@@ -114,24 +117,29 @@ function App() {
                   Connect Wallet
                 </button>
               )}
-            </div> : <span>Looking for Web3...</span>
-          }
+            </div>
+          ) : (
+            <span>Looking for Web3...</span>
+          )}
           <div className="balance-view is-size-2 my-4">
             Current Balance: <strong>{balance}</strong> ETH
           </div>
+          {!canConnectToContract && (
+            <em className="is-block mb-2">Connect to Ganache network</em>
+          )}
           <button
-            disabled={!account}
+            disabled={!canConnectToContract}
             className="button is-link mr-2"
             onClick={addFunds}
           >
             Donate 1 ETH
           </button>
           <button
-            disabled={!account}
+            disabled={!canConnectToContract}
             className="button is-primary"
             onClick={withdrawFunds}
           >
-            Withdraw
+            Withdraw 0.1 ETH
           </button>
         </div>
       </div>
