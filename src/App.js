@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Web3 from "web3";
 import detectEthereumProvider from "@metamask/detect-provider";
 import loadContract from "./utils/loadContract";
@@ -12,6 +12,7 @@ function App() {
   });
   const [account, setAccount] = useState(null);
   const [balance, setBalance] = useState(null);
+  const [shouldReload, setShouldReload] = useState(false);
 
   useEffect(() => {
     const loadProvider = async () => {
@@ -52,11 +53,29 @@ function App() {
     if (web3Api.web3 && web3Api.contract) {
       loadBalance();
     }
-  }, [web3Api.web3, web3Api.contract]);
+  }, [web3Api.web3, web3Api.contract, shouldReload]);
 
-  const onConnectWallet = () => {
+  const onConnectWallet = useCallback(() => {
     web3Api.provider.request({ method: "eth_requestAccounts" });
-  };
+  }, [web3Api.provider]);
+
+  const addFunds = useCallback(async () => {
+    await web3Api.contract.addFunds({
+      from: account,
+      value: web3Api.web3.utils.toWei("1", "ether"),
+    });
+    setShouldReload(!shouldReload);
+  }, [account, shouldReload, web3Api.contract, web3Api.web3]);
+
+  const withdrawFunds = useCallback(async () => {
+    await web3Api.contract.withdrawFunds(
+      web3Api.web3.utils.toWei("0.1", "ether"),
+      {
+        from: account,
+      }
+    );
+    setShouldReload(!shouldReload);
+  }, [account, shouldReload, web3Api.contract, web3Api.web3]);
 
   return (
     <>
@@ -77,8 +96,12 @@ function App() {
           <div className="balance-view is-size-2 my-4">
             Current Balance: <strong>{balance}</strong> ETH
           </div>
-          <button className="button is-link mr-2">Donate</button>
-          <button className="button is-primary">Withdraw</button>
+          <button className="button is-link mr-2" onClick={addFunds}>
+            Donate 1 ETH
+          </button>
+          <button className="button is-primary" onClick={withdrawFunds}>
+            Withdraw
+          </button>
         </div>
       </div>
     </>
